@@ -12,10 +12,13 @@ categories = ["algorithms"]
 license = "MIT"
 
 [dependencies]
-num-complex = { version = "0.4.0", features = ["serde", "rand"] }
+num-complex = { version = "0.4.0", features = ["rand"] }
 num-traits = "0.2.14"
 rand = "0.8.3"
-serde = "1.0.124"
+serde = { version = "1.0.124", optional = true }
+
+[features]
+serde = ["dep:serde", "num-complex/serde"]
 
 [package.metadata.release]
 no-dev-version = true

@@ -40,7 +40,6 @@
 use num_complex::Complex;
 use num_traits::{Float, FromPrimitive, NumAssign, NumCast, NumOps, ToPrimitive, Zero};
 use rand::{distributions::Standard, prelude::*};
-use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, LowerExp, UpperExp};
 use std::iter::{Product, Sum};
 use std::ops::Neg;
@@ -48,6 +47,10 @@ use std::ops::Neg;
 pub use num_complex::Complex32 as c32;
 pub use num_complex::Complex64 as c64;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "serde")]
 pub trait Scalar:
     NumAssign
     + FromPrimitive
@@ -63,6 +66,86 @@ pub trait Scalar:
     + Product
     + Serialize
     + for<'de> Deserialize<'de>
+    + 'static
+{
+    type Real: Scalar<Real = Self::Real, Complex = Self::Complex>
+        + NumOps<Self::Real, Self::Real>
+        + Float;
+    type Complex: Scalar<Real = Self::Real, Complex = Self::Complex>
+        + NumOps<Self::Real, Self::Complex>
+        + NumOps<Self::Complex, Self::Complex>;
+
+    /// Create a new real number
+    fn real<T: ToPrimitive>(re: T) -> Self::Real;
+    /// Create a new complex number
+    fn complex<T: ToPrimitive>(re: T, im: T) -> Self::Complex;
+
+    fn from_real(re: Self::Real) -> Self;
+
+    fn add_real(self, re: Self::Real) -> Self;
+    fn sub_real(self, re: Self::Real) -> Self;
+    fn mul_real(self, re: Self::Real) -> Self;
+    fn div_real(self, re: Self::Real) -> Self;
+
+    fn add_complex(self, im: Self::Complex) -> Self::Complex;
+    fn sub_complex(self, im: Self::Complex) -> Self::Complex;
+    fn mul_complex(self, im: Self::Complex) -> Self::Complex;
+    fn div_complex(self, im: Self::Complex) -> Self::Complex;
+
+    fn pow(self, n: Self) -> Self;
+    fn powi(self, n: i32) -> Self;
+    fn powf(self, n: Self::Real) -> Self;
+    fn powc(self, n: Self::Complex) -> Self::Complex;
+
+    /// Real part
+    fn re(&self) -> Self::Real;
+    /// Imaginary part
+    fn im(&self) -> Self::Real;
+    /// As a complex number
+    fn as_c(&self) -> Self::Complex;
+    /// Complex conjugate
+    fn conj(&self) -> Self;
+
+    /// Absolute value
+    fn abs(self) -> Self::Real;
+    /// Sqaure of absolute value
+    fn square(self) -> Self::Real;
+
+    fn sqrt(self) -> Self;
+    fn exp(self) -> Self;
+    fn ln(self) -> Self;
+    fn sin(self) -> Self;
+    fn cos(self) -> Self;
+    fn tan(self) -> Self;
+    fn asin(self) -> Self;
+    fn acos(self) -> Self;
+    fn atan(self) -> Self;
+    fn sinh(self) -> Self;
+    fn cosh(self) -> Self;
+    fn tanh(self) -> Self;
+    fn asinh(self) -> Self;
+    fn acosh(self) -> Self;
+    fn atanh(self) -> Self;
+
+    /// Generate an random number from
+    /// [rand::distributions::Standard](https://docs.rs/rand/0.7.2/rand/distributions/struct.Standard.html)
+    fn rand(rng: &mut impl Rng) -> Self;
+}
+
+#[cfg(not(feature = "serde"))]
+pub trait Scalar:
+    NumAssign
+    + FromPrimitive
+    + NumCast
+    + Neg<Output = Self>
+    + Copy
+    + Clone
+    + Display
+    + Debug
+    + LowerExp
+    + UpperExp
+    + Sum
+    + Product
     + 'static
 {
     type Real: Scalar<Real = Self::Real, Complex = Self::Complex>
